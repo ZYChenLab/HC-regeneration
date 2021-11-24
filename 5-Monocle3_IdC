@@ -1,0 +1,177 @@
+library(Seurat)
+library(ggplot2)
+library(patchwork)
+library(magrittr)
+library(monocle3)
+library(dplyr)
+library(cowplot)
+library(MAST)
+library(pheatmap)
+library(tibble)
+
+sample.integrated <- readRDS("~/Desktop/WTvsDox-CellRanger-Outs/Data_combined_all/SCT/SCT-III/Seurat_Combined.rds")
+
+new.cluster.ids <- c("IdC", "CCOS","RMC","DC","CCOS","KO","CCOS","HeC","uSC","RMC","MLC","MLC","DC","HC")
+names(new.cluster.ids) <- levels(sample.integrated)
+sample.integrated <- RenameIdents(sample.integrated, `0` = "IdC", `1` = "CCOS", `2` = "RMC", 
+                                  `3` = "DC", `4` = "CCOS", `5` = "KO", `6` = "CCOS", `7` = "HeC", 
+                                  `8` = "uSC", `9` = "RMC", `10` = "MLC", `11` = "MLC", 
+                                  `12` = "DC", `13` = "HC")
+
+sample.integrated$celltype.stim <- paste(Idents(sample.integrated), sample.integrated$stim, sep = "_")
+sample.integrated$celltype <- Idents(sample.integrated)
+Idents(sample.integrated) <- "celltype.stim"
+levels(sample.integrated)
+
+sub_seurat <- subset(sample.integrated, idents = c("IdC_Control", "IdC_Dox"))
+
+gene_annotation <- as.data.frame(rownames(sub_seurat@reductions[["pca"]]@feature.loadings),
+                                 row.names = rownames(sub_seurat@reductions[["pca"]]@feature.loadings))
+colnames(gene_annotation) <- "gene_short_name"
+
+cell_metadata <- as.data.frame(sub_seurat@assays[["RNA"]]@counts@Dimnames[[2]],
+                               row.names = sub_seurat@assays[["RNA"]]@counts@Dimnames[[2]])
+colnames(cell_metadata) <- "barcode"
+
+New_matrix <- sub_seurat@assays[["RNA"]]@counts
+New_matrix <- New_matrix[rownames(sub_seurat@reductions[["pca"]]@feature.loadings), ]
+expression_matrix <- New_matrix
+
+cds_from_seurat <- new_cell_data_set(expression_matrix,
+                                     cell_metadata = cell_metadata,
+                                     gene_metadata = gene_annotation)
+
+recreate.partition <- c(rep(1, length(cds_from_seurat@colData@rownames)))
+names(recreate.partition) <- cds_from_seurat@colData@rownames
+recreate.partition <- as.factor(recreate.partition)
+
+cds_from_seurat@clusters@listData[["UMAP"]][["partitions"]] <- recreate.partition
+
+list_cluster <- sub_seurat@active.ident
+names(list_cluster) <- sub_seurat@assays[["RNA"]]@data@Dimnames[[2]]
+
+cds_from_seurat@clusters@listData[["UMAP"]][["clusters"]] <- list_cluster
+
+cds_from_seurat@clusters@listData[["UMAP"]][["louvain_res"]] <- "NA"
+
+cds_from_seurat@int_colData@listData$reducedDims@listData[["UMAP"]] <-sub_seurat@reductions[["umap"]]@cell.embeddings
+
+cds_from_seurat@preprocess_aux$gene_loadings <- sub_seurat@reductions[["pca"]]@feature.loadings
+
+cds_from_seurat <- learn_graph(cds_from_seurat, use_partition = F)
+
+plot_cells(cds_from_seurat, 
+           color_cells_by = "cluster",
+           reduction_method = "UMAP",
+           label_groups_by_cluster = FALSE,
+           norm_method = "log",
+           label_leaves = FALSE,
+           show_trajectory_graph = TRUE,
+           label_branch_points = F,
+           trajectory_graph_color = "grey28",
+           trajectory_graph_segment_size = 1,
+           cell_size = 0.5,
+           label_cell_groups = F)
+
+get_earliest_principal_node <- function(cds_from_seurat, time_bin="6"){
+  cell_ids <- which(colData(cds_from_seurat)[, "seurat_clusters"] == time_bin)
+  
+  closest_vertex <-
+    cds_from_seurat@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
+  closest_vertex <- as.matrix(closest_vertex[colnames(cds_from_seurat), ])
+  root_pr_nodes <-
+    igraph::V(principal_graph(cds_from_seurat)[["UMAP"]])$name[as.numeric(names
+                                                                 (which.max(table(closest_vertex[cell_ids,]))))]
+  
+  root_pr_nodes
+}
+
+cds_from_seurat <- order_cells(cds_from_seurat, reduction_method = "UMAP")
+
+plot_cells(cds_from_seurat,
+           color_cells_by = "pseudotime",
+           label_cell_groups=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE,
+           graph_label_size=F,
+           trajectory_graph_color = "#000000",
+           cell_size = 1)
+
+marker_test_res <- top_markers(cds_from_seurat, group_cells_by="cluster", 
+                               reference_cells=NULL, cores=2)
+
+top_specific_markers <- marker_test_res %>%
+  filter(fraction_expressing >= 0.01) %>%
+  group_by(cell_group) %>%
+  top_n(100, pseudo_R2)
+
+#top_specific_marker_ids <- unique(top_specific_markers %>% pull(gene_id))
+
+DEGs <- graph_test(cds_from_seurat, neighbor_graph = "principal_graph",
+                   reduction_method = "UMAP",
+                   k = 25,
+                   method = c("Moran_I"),
+                   alternative = "greater",
+                   expression_family = "quasipoisson",
+                   cores = 2,
+                   verbose = FALSE)
+
+
+#find gene modules
+pr_deg_ids <- row.names(subset(DEGs, q_value < 0.01))
+gene_module_df <- find_gene_modules(cds_from_seurat[pr_deg_ids,], resolution=0.0009)
+#organize gene modules
+agg_mat <- aggregate_gene_expression(cds_from_seurat, gene_module_df)
+module_dendro <- hclust(dist(agg_mat))
+gene_module_df$module <- factor(gene_module_df$module,
+                                levels = row.names(agg_mat)[module_dendro$order])
+row.names(agg_mat) <- stringr::str_c("Module ", row.names(agg_mat))
+colnames(agg_mat) <- stringr::str_c("Partition ", colnames(agg_mat))
+pheatmap::pheatmap(agg_mat,
+                   scale="column", clustering_method="ward.D2")
+
+#split modules to selected cell groups
+cell_group_df <- tibble::tibble(cell=row.names(colData(cds_from_seurat)), 
+                                cell_group=cds_from_seurat@clusters@listData[["UMAP"]][["clusters"]]) 
+
+agg_mat <- aggregate_gene_expression(cds_from_seurat, gene_module_df, cell_group_df)
+row.names(agg_mat) <- stringr::str_c("Module ", row.names(agg_mat))
+pheatmap::pheatmap(agg_mat,
+                   scale="column", clustering_method="ward.D2")
+
+#plot genes in pseudotime and UMAP
+
+topDox_genes <- row.names(subset(fData(cds_from_seurat),
+                                 gene_short_name %in% c("Dixdc1", "Klf4", "Ccnd1", "Fzd3", 
+                                                        "Fzd8", "Fzd9", "Myc", "Sfrp1", "Wnt5a", "Wnt9a")))
+topDox_genes_subset <- cds_from_seurat[topDox_genes,]
+plot_genes_in_pseudotime(topDox_genes_subset)
+
+cAMP_genes <- row.names(subset(fData(cds_from_seurat),
+                               gene_short_name %in% c("Cited1", "Cdo1", "Dusp1", "Mat2a", "Pebp1")))
+cAMP_genes_subset <- cds_from_seurat[cAMP_genes,]
+plot_genes_in_pseudotime(cAMP_genes_subset)
+
+cAMP_genes2 <- row.names(subset(fData(cds_from_seurat),
+                               gene_short_name %in% c("Fos", "Fosb", "Jun", "Junb", "Jund")))
+cAMP_genes_subset2 <- cds_from_seurat[cAMP_genes2,]
+plot_genes_in_pseudotime(cAMP_genes_subset2)
+
+
+WNT_genes <- row.names(subset(fData(cds_from_seurat),
+                               gene_short_name %in% c("Wnt5a", "Macf1", "Myc", "Sfrp1", "Slc9a3r1")))
+WNT_genes_subset <- cds_from_seurat[WNT_genes,]
+plot_genes_in_pseudotime(WNT_genes_subset)
+
+WNT_genes2 <- row.names(subset(fData(cds_from_seurat),
+                              gene_short_name %in% c("Ndrg2", "Amotl2", "Celsr2", "Cpe", "Ccnd1")))
+WNT_genes_subset2 <- cds_from_seurat[WNT_genes2,]
+plot_genes_in_pseudotime(WNT_genes_subset2)
+
+
+plot_cells(cds_from_seurat, cell_size = 1,
+           genes=c("Cited1", "Cdo1", "Dusp1", "Mat2a", "Pebp1"),
+           label_cell_groups=F,
+           show_trajectory_graph=T)
+
+write.csv(gene_module_df, "~/Desktop/gene_module_df.csv")
