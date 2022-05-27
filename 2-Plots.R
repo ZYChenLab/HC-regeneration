@@ -150,7 +150,7 @@ FeaturePlot(sample.integrated,
 VlnPlot(sample.integrated, features = c("Ciart", "Hspa1a", "Hspa1b", "Trp53rkb"), 
         pt.size = 0, assay = "integrated", adjust = 2, stack = T, flip = T, fill.by = "ident")
 
-#TBRM Tympanic border resident macrophages
+#MLC Macrophage-like cells
 FeaturePlot(sample.integrated, 
             reduction = "umap", 
             features = c("Cx3cr1", "Emilin2", "Lyz2", "Fcgr1"),
