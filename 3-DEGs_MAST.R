@@ -1,40 +1,30 @@
-# DEGs between samples
 sample.integrated <- readRDS("~/Desktop/WTvsDox-CellRanger-Outs/Data_combined_all/SCT/SCT-III/Seurat_Combined.rds")
 
-new.cluster.ids <- c("IdC", "CCOS","RMC","DC","CCOS","KO","CCOS","HeC","SC","RMC","TBRM","TBRM","DC","HC")
+new.cluster.ids <- c("IdC", "CCOS","RMC","DC","CCOS","KO","CCOS","HeC","uSC","RMC","MLC","MLC","DC","HC")
 names(new.cluster.ids) <- levels(sample.integrated)
 sample.integrated <- RenameIdents(sample.integrated, `0` = "IdC", `1` = "CCOS", `2` = "RMC", 
                                   `3` = "DC", `4` = "CCOS", `5` = "KO", `6` = "CCOS", `7` = "HeC", 
-                                  `8` = "SC", `9` = "RMC", `10` = "TBRM", `11` = "TBRM", 
+                                  `8` = "uSC", `9` = "RMC", `10` = "MLC", `11` = "MLC", 
                                   `12` = "DC", `13` = "HC")
+
+#Global DEGs between Control and Dox samples
 
 DefaultAssay(sample.integrated) <- "RNA"
 sample.integrated <- NormalizeData(sample.integrated, verbose = FALSE)
-Idents(sample.integrated) <- "sample"
+Idents(sample.integrated) <- "stim"
 sample.integrated@active.assay <- "RNA"
-DEG_D1C_MAST <- FindMarkers(sample.integrated, ident.1 = "Dox1", ident.2 = "Control", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
-DEG_D1C_MAST <- DEG_D1C_MAST[which(DEG_D1C_MAST$p_val_adj < 0.05),]
-DEG_D1C_MAST <- DEG_D1C_MAST[is.finite(rowSums(DEG_D1C_MAST)),]
 
-write.csv(DEG_D1C_MAST, file = "~/Desktop/DOX1up_MAST.csv")
+DEG_DC_MAST <- FindMarkers(sample.integrated, ident.1 = "Dox", ident.2 = "Control", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
+DEG_DC_MAST <- DEG_DC_MAST[which(DEG_DC_MAST$p_val_adj < 0.05),]
+DEG_DC_MAST <- DEG_DC_MAST[is.finite(rowSums(DEG_DC_MAST)),]
 
-DEG_CD1_MAST <- FindMarkers(sample.integrated, ident.1 = "Control", ident.2 = "Dox1", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
-DEG_CD1_MAST <- DEG_CD1_MAST[which(DEG_CD1_MAST$p_val_adj < 0.05),]
-DEG_CD1_MAST <- DEG_CD1_MAST[is.finite(rowSums(DEG_CD1_MAST)),]
+write.csv(DEG_DC_MAST, file = "~/Desktop/DOXup_MAST.csv")
 
-write.csv(DEG_CD1_MAST, file = "~/Desktop/MAST/CTRL1up_MAST.csv")
+DEG_CD_MAST <- FindMarkers(sample.integrated, ident.1 = "Control", ident.2 = "Dox", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
+DEG_CD_MAST <- DEG_CD_MAST[which(DEG_CD_MAST$p_val_adj < 0.05),]
+DEG_CD_MAST <- DEG_CD_MAST[is.finite(rowSums(DEG_CD_MAST)),]
 
-DEG_D2C_MAST <- FindMarkers(sample.integrated, ident.1 = "Dox2", ident.2 = "Control", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
-DEG_D2C_MAST <- DEG_D2C_MAST[which(DEG_D2C_MAST$p_val_adj < 0.05),]
-DEG_D2C_MAST <- DEG_D2C_MAST[is.finite(rowSums(DEG_D2C_MAST)),]
-
-write.csv(DEG_D2C_MAST, file = "~/Desktop/MAST/DOX2up_MAST.csv")
-
-DEG_CD2_MAST <- FindMarkers(sample.integrated, ident.1 = "Control", ident.2 = "Dox2", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
-DEG_CD2_MAST <- DEG_CD2_MAST[which(DEG_CD2_MAST$p_val_adj < 0.05),]
-DEG_CD2_MAST <- DEG_CD2_MAST[is.finite(rowSums(DEG_CD2_MAST)),]
-
-write.csv(DEG_CD2_MAST, file = "~/Desktop/MAST/CTRL2up_MAST.csv")
+write.csv(DEG_CD_MAST, file = "~/Desktop/MAST/CTRLup_MAST.csv")
 
 dev.off()
 
@@ -96,25 +86,25 @@ DEG_CtrlDC <- DEG_CtrlDC[which(DEG_CtrlDC$p_val_adj < 0.05),]
 DEG_CtrlDC <- DEG_CtrlDC[is.finite(rowSums(DEG_CtrlDC)),]
 write.csv(DEG_CtrlDC, file = "~/Desktop/MAST/DEG_CtrlDC.csv")
 
-DEG_DoxSC <- FindMarkers(sample.integrated, ident.1 = "SC_Dox", ident.2 = "SC_Control", assay = "RNA", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
+DEG_DoxSC <- FindMarkers(sample.integrated, ident.1 = "uSC_Dox", ident.2 = "uSC_Control", assay = "RNA", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
 DEG_DoxSC <- DEG_DoxSC[which(DEG_DoxSC$p_val_adj < 0.05),]
 DEG_DoxSC <- DEG_DoxSC[is.finite(rowSums(DEG_DoxSC)),]
 write.csv(DEG_DoxSC, file = "~/Desktop/MAST/DEG_DoxSC.csv")
 
-DEG_CtrlSC <- FindMarkers(sample.integrated, ident.1 = "SC_Control", ident.2 = "SC_Dox", assay = "RNA", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
+DEG_CtrlSC <- FindMarkers(sample.integrated, ident.1 = "uSC_Control", ident.2 = "uSC_Dox", assay = "RNA", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
 DEG_CtrlSC <- DEG_CtrlSC[which(DEG_CtrlSC$p_val_adj < 0.05),]
 DEG_CtrlSC <- DEG_CtrlSC[is.finite(rowSums(DEG_CtrlSC)),]
 write.csv(DEG_CtrlSC, file = "~/Desktop/MAST/DEG_CtrlSC.csv")
 
-DEG_DoxTBRM <- FindMarkers(sample.integrated, ident.1 = "TBRM_Dox", ident.2 = "TBRM_Control", assay = "RNA", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
-DEG_DoxTBRM <- DEG_DoxTBRM[which(DEG_DoxTBRM$p_val_adj < 0.05),]
-DEG_DoxTBRM <- DEG_DoxTBRM[is.finite(rowSums(DEG_DoxTBRM)),]
-write.csv(DEG_DoxTBRM, file = "~/Desktop/MAST/DEG_DoxTBRM.csv")
+DEG_DoxMLC <- FindMarkers(sample.integrated, ident.1 = "MLC_Dox", ident.2 = "MLC_Control", assay = "RNA", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
+DEG_DoxMLC <- DEG_DoxMLC[which(DEG_DoxMLC$p_val_adj < 0.05),]
+DEG_DoxMLC <- DEG_DoxMLC[is.finite(rowSums(DEG_DoxMLC)),]
+write.csv(DEG_DoxMLC, file = "~/Desktop/MAST/DEG_DoxMLC.csv")
 
-DEG_CtrlTBRM <- FindMarkers(sample.integrated, ident.1 = "TBRM_Control", ident.2 = "TBRM_Dox", assay = "RNA", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
-DEG_CtrlTBRM <- DEG_CtrlTBRM[which(DEG_CtrlTBRM$p_val_adj < 0.05),]
-DEG_CtrlTBRM <- DEG_CtrlTBRM[is.finite(rowSums(DEG_CtrlTBRM)),]
-write.csv(DEG_CtrlTBRM, file = "~/Desktop/MAST/DEG_CtrlTBRM.csv")
+DEG_CtrlMLC <- FindMarkers(sample.integrated, ident.1 = "MLC_Control", ident.2 = "MLC_Dox", assay = "RNA", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
+DEG_CtrlMLC <- DEG_CtrlMLC[which(DEG_CtrlMLC$p_val_adj < 0.05),]
+DEG_CtrlMLC <- DEG_CtrlMLC[is.finite(rowSums(DEG_CtrlMLC)),]
+write.csv(DEG_CtrlMLC, file = "~/Desktop/MAST/DEG_CtrlMLC.csv")
 
 DEG_DoxRMC <- FindMarkers(sample.integrated, ident.1 = "RMC_Dox", ident.2 = "RMC_Control", assay = "RNA", logfc.threshold = 0.25, test.use = "MAST", only.pos = T)
 DEG_DoxRMC <- DEG_DoxRMC[which(DEG_DoxRMC$p_val_adj < 0.05),]
