@@ -1,6 +1,4 @@
-# HC_Regeneration
-
-Regeneration of Cochlear Hair Cells in Adult Mice by Chemical Mediated Reprogramming
+This repository contains all codes used to analyse the data reported in "Regeneration of Cochlear Hair Cells in Adult Mice by Chemical Mediated Reprogramming"
 
 ABSTRACT 
 
