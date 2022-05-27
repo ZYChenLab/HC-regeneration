@@ -1,10 +1,10 @@
 sample.integrated <- readRDS("~/Desktop/WTvsDox-CellRanger-Outs/Data_combined_all/SCT/SCT-III/Seurat_Combined.rds")
 
-new.cluster.ids <- c("IdC", "CCOS","RMC","DC","CCOS","KO","CCOS","HeC","SC","RMC","TBRM","TBRM","DC","HC")
+new.cluster.ids <- c("IdC", "CCOS","RMC","DC","CCOS","KO","CCOS","HeC","uSC","RMC","MLC","MLC","DC","HC")
 names(new.cluster.ids) <- levels(sample.integrated)
 sample.integrated <- RenameIdents(sample.integrated, `0` = "IdC", `1` = "CCOS", `2` = "RMC", 
                                   `3` = "DC", `4` = "CCOS", `5` = "KO", `6` = "CCOS", `7` = "HeC", 
-                                  `8` = "SC", `9` = "RMC", `10` = "TBRM", `11` = "TBRM", 
+                                  `8` = "uSC", `9` = "RMC", `10` = "MLC", `11` = "MLC", 
                                   `12` = "DC", `13` = "HC")
 
 #DefaultAssay(sample.integrated) <- "RNA"
@@ -232,6 +232,7 @@ DoHeatmap(cluster.averages, features = c("Galm", "Nfix", "Epcam", "Tspan8",
                                          "Cx3cr1", "Emilin2", "Lyz2", "Fcgr1",
                                          "Pvalb", "Atp8a2", "Faim2", "Dnm3"), size = 4, 
           disp.max = 6, draw.lines = FALSE)
+
 #Heatmap from sample integrated with integrated assay
 DoHeatmap(sample.integrated, features = c("Galm", "Nfix", "Epcam", "Tspan8",
                                           "Cp", "Col3a1", "Fstl1", "Lhfp",
@@ -244,7 +245,7 @@ DoHeatmap(sample.integrated, features = c("Galm", "Nfix", "Epcam", "Tspan8",
                                           "Pvalb", "Atp8a2", "Faim2", "Dnm3"), 
           assay = "integrated", size = 4, disp.max = 6, draw.lines = FALSE)
 
-#Expression analysis of RT-PCR targets
+#Expression analysis of RT-qPCR targets
 VlnPlot(sample.integrated, features = c("Notch1", "Six1", "Gata3", "Eya1", "Hes5", "Hes1", "Cdkn1b", "Myc", "Foxg1",
                                         "Prox1", "Dlx5", "Sox2", "Alpl", "Fut4"), 
         pt.size = 0, assay = "RNA", stack = T, log = T, flip = F, fill.by = "ident")
@@ -258,8 +259,7 @@ VlnPlot(sample.integrated, features = c("Tmprss3", "Pvalb", "Pxdc1", "Veph1",
 VlnPlot(cluster.averages, features = c("Lamp1", "Cst3", "Mical1", "Fabp3"), 
         pt.size = 0, assay = "RNA")
 
-#Paper figure
-
+#Paper figures
 FeaturePlot(sample.integrated, 
             reduction = "umap", 
             features = c("Galm", "Col3a1", "Vmo1"),
@@ -340,7 +340,6 @@ VlnPlot(sample.integrated, features = "Myo7a", pt.size = 0,
 VlnPlot(sample.integrated, features = "Espn", pt.size = 0, 
         assay = "RNA", adjust = 1, split.by = "sample", log = F, flip = F, fill.by = "ident", y.max = 20)
 
-#paper fig
 FeaturePlot(sample.integrated, 
             reduction = "umap", 
             features = c("Galm", "Nfix", "Epcam", "Cp", "Col3a1", "Fstl1", "Vmo1", "Meis2", "Fut9"),
