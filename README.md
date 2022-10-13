@@ -1,9 +1,9 @@
 This repository contains all codes used to analyse the data reported in "Reprogramming by Drug-like Molecules Leads to Regeneration of Cochlear Hair Cells in Adult Mice"
 
-Authors
+#Authors
 Yi-Zhou Quan1,2†, Wei Wei1,2,4†, Volkan Ergin1,2†, Arun Prabhu Rameshbabu1,2, Mingqian Huang1,2, Chunjie Tian1,2, Srinivas Vinod Saladi3,5, Artur A Indzhykulian1,2, and Zheng-Yi Chen1,2*
 
-Affiliations 
+#Affiliations 
 1 Department of Otolaryngology-Head and Neck Surgery, Graduate Program in Speech and Hearing Bioscience and Technology and Program in Neuroscience,
 Harvard Medical School, Boston, MA 02115.
 2 Eaton-Peabody Laboratory, Massachusetts Eye and Ear Infirmary, 243 Charles St., Boston, MA 02114
