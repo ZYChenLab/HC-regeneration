@@ -1,6 +1,8 @@
-This repository contains all codes used to analyse the data reported in "Reprogramming by Drug-like Molecules Leads to Regeneration of Cochlear Hair Cells in Adult Mice"
+This repository contains all codes used to analyse the data reported in "Reprogramming by Drug-like Molecules Leads to Regeneration of Cochlear Hair Cells in Adult Mice" 
 
-Authors
+https://www.pnas.org/doi/10.1073/pnas.2215253120
+
+Authors 
 
 Yi-Zhou Quan1,2†, Wei Wei1,2,4†, Volkan Ergin1,2†, Arun Prabhu Rameshbabu1,2, Mingqian Huang1,2, Chunjie Tian1,2, Srinivas Vinod Saladi3,5, Artur A Indzhykulian1,2, and Zheng-Yi Chen1,2*
 
